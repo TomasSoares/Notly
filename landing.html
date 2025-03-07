@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="pt">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Notly</title>
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap");
+
+      /* Base styling */
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        background: #000000;
+        overflow: hidden;
+        font-family: "Inter", sans-serif;
+      }
+
+      canvas {
+        display: block;
+        position: fixed;
+        top: 0;
+        left: 0;
+      }
+
+      /* Enhanced container with animations */
+      .container {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        z-index: 10;
+        text-align: center;
+        display: flex;
+        flex-direction: column;
+        gap: 22px;
+        width: 320px;
+        padding: 35px;
+        background: rgba(15, 15, 20, 0.6);
+        backdrop-filter: blur(12px);
+        border-radius: 24px;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5),
+          0 0 0 1px rgba(255, 255, 255, 0.05) inset;
+        animation: fadeIn 1s ease-out;
+        transition: all 0.4s ease;
+      }
+
+      /* Logo and title styling */
+      .logo-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        margin-bottom: 5px;
+      }
+
+      h1 {
+        color: white;
+        font-family: "Inter", sans-serif;
+        font-size: 3.5rem;
+        margin: 0;
+        letter-spacing: -0.5px;
+        text-shadow: 0 0 15px rgba(255, 255, 255, 0.5);
+        font-weight: 600;
+        position: relative;
+        animation: floatUp 0.8s ease-out;
+      }
+
+      h1::after {
+        content: "";
+        position: absolute;
+        bottom: -10px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 40px;
+        height: 3px;
+        background: linear-gradient(
+          90deg,
+          rgba(255, 255, 255, 0),
+          rgba(255, 255, 255, 0.8),
+          rgba(255, 255, 255, 0)
+        );
+        border-radius: 3px;
+      }
+
+      /* Enhanced button styling */
+      button {
+        padding: 14px 24px;
+        border: none;
+        border-radius: 50px;
+        cursor: pointer;
+        font-size: 1rem;
+        width: 100%;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+        transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+        font-weight: 500;
+        letter-spacing: 0.2px;
+        font-family: "Inter", sans-serif;
+        position: relative;
+        overflow: hidden;
+        animation: slideUp 0.5s ease-out both;
+      }
+
+      .new-notes {
+        animation-delay: 0.1s;
+        background: linear-gradient(135deg, #e0e0e0, #f5f5f5);
+        color: #333;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        position: relative;
+        z-index: 1;
+      }
+
+      .new-notes::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(
+          90deg,
+          transparent,
+          rgba(0, 0, 0, 0.1),
+          transparent
+        );
+        transition: 0.5s;
+        z-index: -1;
+      }
+
+      .new-notes:hover::before {
+        left: 100%;
+      }
+
+      .new-notes::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        border-radius: 50px;
+        border: 2px solid transparent;
+        background-image: linear-gradient(
+          135deg,
+          transparent,
+          rgba(0, 0, 0, 0.2)
+        );
+        background-origin: border-box;
+        background-clip: border-box;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+      }
+
+      .new-notes:hover::after {
+        opacity: 1;
+      }
+
+      .new-notes:hover {
+        transform: translateY(-4px) scale(1.02);
+        box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2), 0 0 0 1px rgba(0, 0, 0, 0.05);
+        background: linear-gradient(135deg, #f0f0f0, #ffffff);
+      }
+
+      .existing-notes {
+        animation-delay: 0.2s;
+        background: linear-gradient(135deg, #555555, #444444);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+      }
+
+      button:hover {
+        transform: translateY(-4px) scale(1.02);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.6);
+      }
+
+      button::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(
+          90deg,
+          transparent,
+          rgba(255, 255, 255, 0.2),
+          transparent
+        );
+        transition: 0.5s;
+      }
+
+      button:hover::before {
+        left: 100%;
+      }
+
+      /* Icon styling */
+      .button-icon {
+        font-size: 1.1rem;
+        line-height: 1;
+      }
+
+      /* Footer text */
+      .app-footer {
+        font-size: 0.75rem;
+        color: rgba(255, 255, 255, 0.4);
+        margin-top: 5px;
+        letter-spacing: 0.4px;
+        animation: fadeIn 1s ease-out 0.5s both;
+      }
+
+      /* Animations */
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+        }
+        to {
+          opacity: 1;
+        }
+      }
+
+      @keyframes slideUp {
+        from {
+          opacity: 0;
+          transform: translateY(20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      @keyframes floatUp {
+        from {
+          opacity: 0;
+          transform: translateY(10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      /* Responsive adjustments */
+      @media (max-width: 400px) {
+        .container {
+          width: 88%;
+          padding: 25px;
+        }
+
+        h1 {
+          font-size: 3rem;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <canvas id="canvas"></canvas>
+
+    <script>
+      const canvas = document.getElementById("canvas");
+      const ctx = canvas.getContext("2d");
+
+      // Setup canvas
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+
+      // Mouse position tracking
+      const mouse = {
+        x: undefined,
+        y: undefined,
+        active: false,
+      };
+
+      // Track mouse movements
+      document.addEventListener("mousemove", (event) => {
+        mouse.x = event.clientX;
+        mouse.y = event.clientY;
+        mouse.active = true;
+      });
+
+      document.addEventListener("mouseleave", () => {
+        mouse.active = false;
+      });
+
+      // Config - black and white only
+      const config = {
+        numStars: 120, // Slightly more stars since we removed nebulae
+        starColors: [
+          "#FFFFFF", // White
+          "#DDDDDD", // Light gray
+          "#AAAAAA", // Medium gray
+        ],
+      };
+
+      // Stars in the background
+      const stars = [];
+
+      class Star {
+        constructor() {
+          this.x = Math.random() * canvas.width;
+          this.y = Math.random() * canvas.height;
+          this.size = Math.random() * 2.5 + 1.0; // Increased star size
+          this.color =
+            config.starColors[
+              Math.floor(Math.random() * config.starColors.length)
+            ];
+          this.brightness = Math.random() * 0.5 + 0.5;
+          this.twinkleSpeed = Math.random() * 0.02 + 0.01;
+          this.twinklePhase = Math.random() * Math.PI * 2;
+          this.speed = Math.random() * 0.1 + 0.05; // Varying speeds
+        }
+
+        draw() {
+          const twinkle = Math.sin(this.twinklePhase) * 0.3 + 0.7;
+
+          ctx.beginPath();
+          ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+          ctx.fillStyle = this.color;
+          ctx.globalAlpha = this.brightness * twinkle;
+          ctx.fill();
+          ctx.globalAlpha = 1;
+        }
+
+        update() {
+          this.twinklePhase += this.twinkleSpeed;
+          this.y += this.speed;
+
+          // Check for mouse interaction
+          if (mouse.active) {
+            const dx = mouse.x - this.x;
+            const dy = mouse.y - this.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+
+            if (distance < 100) {
+              // Push stars away from mouse
+              this.x += (this.x - mouse.x) * 0.02;
+              this.y += (this.y - mouse.y) * 0.02;
+            }
+          }
+
+          // Reset position when star goes off screen
+          if (this.y > canvas.height) {
+            this.y = 0;
+            this.x = Math.random() * canvas.width;
+          }
+
+          // Wrap around sides
+          if (this.x < 0) this.x = canvas.width;
+          if (this.x > canvas.width) this.x = 0;
+        }
+      }
+
+      // Initialize stars
+      function initStars() {
+        for (let i = 0; i < config.numStars; i++) {
+          stars.push(new Star());
+        }
+      }
+
+      // Handle window resize
+      window.addEventListener("resize", () => {
+        // Save old dimensions for ratio calculation
+        const oldWidth = canvas.width;
+        const oldHeight = canvas.height;
+
+        // Update canvas size to match new window dimensions
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        // Reposition all stars proportionally to maintain their relative positions
+        for (const star of stars) {
+          // Scale star positions according to new dimensions
+          star.x = (star.x / oldWidth) * canvas.width;
+          star.y = (star.y / oldHeight) * canvas.height;
+
+          // Make sure stars are within bounds
+          if (star.x < 0) star.x = 0;
+          if (star.x > canvas.width) star.x = canvas.width;
+          if (star.y < 0) star.y = 0;
+          if (star.y > canvas.height) star.y = canvas.height;
+        }
+      });
+
+      // Animation loop
+      function animate() {
+        requestAnimationFrame(animate);
+
+        // Clear canvas with slight trailing effect
+        ctx.fillStyle = "rgba(0, 0, 0, 0.2)";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        // Update and draw stars
+        for (const star of stars) {
+          star.update();
+          star.draw();
+        }
+      }
+
+      // Initialize and start animation
+      initStars();
+      animate();
+    </script>
+    <div class="container">
+      <div class="logo-container">
+        <h1>Notly</h1>
+      </div>
+      <button class="new-notes">
+        <span class="button-icon">+</span>
+        <span>New Note</span>
+      </button>
+      <button class="existing-notes">
+        <span class="button-icon">≡</span>
+        <span>Notes</span>
+      </button>
+      <div class="app-footer">Write. Save. Remeber.</div>
+    </div>
+    <script>
+      // Create a subtle parallax effect on the title and buttons
+      document.addEventListener("mousemove", (e) => {
+        const container = document.querySelector(".container");
+        const title = document.querySelector("h1");
+        const buttons = document.querySelectorAll("button");
+
+        // Calculate mouse position relative to center of screen
+        const mouseX = e.clientX / window.innerWidth - 0.5;
+        const mouseY = e.clientY / window.innerHeight - 0.5;
+
+        // Apply subtle movement to elements
+        title.style.transform = `translateX(${mouseX * 20}px) translateY(${
+          mouseY * 10
+        }px)`;
+
+        buttons.forEach((button, index) => {
+          // Different movement amount for each button creates depth
+          const depth = (index + 1) * 1.5;
+          button.style.transform = `translateX(${
+            mouseX * 10 * depth
+          }px) translateY(${mouseY * 5 * depth}px)`;
+        });
+      });
+
+      // Function to create a shooting star effect occasionally
+      function createShootingStar() {
+        const canvas = document.getElementById("canvas");
+        const ctx = canvas.getContext("2d");
+
+        const startX = Math.random() * canvas.width;
+        const startY = (Math.random() * canvas.height) / 3; // Top third of screen
+        const length = Math.random() * 150 + 100;
+        const angle = Math.PI / 4; // 45 degrees downward
+
+        const endX = startX + Math.cos(angle) * length;
+        const endY = startY + Math.sin(angle) * length;
+
+        // Draw shooting star
+        const gradient = ctx.createLinearGradient(startX, startY, endX, endY);
+        gradient.addColorStop(0, "rgba(255, 255, 255, 0)");
+        gradient.addColorStop(0.3, "rgba(255, 255, 255, 0.5)");
+        gradient.addColorStop(1, "rgba(255, 255, 255, 0)");
+
+        ctx.beginPath();
+        ctx.moveTo(startX, startY);
+        ctx.lineTo(endX, endY);
+        ctx.strokeStyle = gradient;
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        // Fade out
+        setTimeout(() => {
+          // The shooting star will naturally fade with the existing canvas clearing
+        }, 300);
+      }
+
+      // Create occasional shooting stars
+      setInterval(() => {
+        // 15% chance of creating a shooting star each interval
+        if (Math.random() < 0.15) {
+          createShootingStar();
+        }
+      }, 2000);
+    </script>
+  </body>
+</html>
