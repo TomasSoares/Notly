@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Your Notes</title>
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap");
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont,
+          "Segoe UI", Roboto, sans-serif;
+      }
+
+      :root {
+        --bg-color: #000000;
+        --container-bg: rgba(15, 15, 20, 0.6);
+        --input-bg: rgba(25, 25, 30, 0.8);
+        --accent-color: rgba(255, 255, 255, 0.8);
+        --accent-hover: rgba(255, 255, 255, 1);
+        --text-primary: rgba(255, 255, 255, 0.9);
+        --text-secondary: rgba(255, 255, 255, 0.5);
+        --border-color: rgba(255, 255, 255, 0.12);
+      }
+
+      body {
+        background-color: var(--bg-color);
+        color: var(--text-primary);
+        min-height: 100vh;
+        overflow-x: hidden;
+        position: relative;
+      }
+
+      canvas {
+        display: block;
+        position: fixed;
+        top: 0;
+        left: 0;
+        z-index: -1;
+      }
+
+      .main-container {
+        position: relative;
+        width: 90%;
+        max-width: 800px;
+        background-color: var(--container-bg);
+        border-radius: 24px;
+        padding: 30px 25px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5),
+          0 0 0 1px rgba(255, 255, 255, 0.05) inset;
+        backdrop-filter: blur(12px);
+        transition: all 0.3s ease;
+        border: 1px solid var(--border-color);
+        margin: 80px auto 60px;
+      }
+
+      .header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 25px;
+        padding-bottom: 15px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      }
+
+      .title {
+        color: white;
+        font-size: 22px;
+        font-weight: 600;
+        letter-spacing: -0.5px;
+      }
+
+      .note-count {
+        background-color: rgba(255, 255, 255, 0.1);
+        color: rgba(255, 255, 255, 0.8);
+        font-size: 14px;
+        padding: 4px 10px;
+        border-radius: 12px;
+        font-weight: 500;
+      }
+
+      .back-button {
+        position: fixed;
+        top: 20px;
+        left: 20px;
+        background-color: rgba(255, 255, 255, 0.1);
+        border: none;
+        color: white;
+        padding: 8px 15px;
+        border-radius: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        z-index: 50;
+        font-size: 14px;
+        backdrop-filter: blur(8px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+        transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+        font-weight: 500;
+        text-decoration: none;
+      }
+
+      .back-button:hover {
+        transform: translateY(-2px);
+        background-color: rgba(255, 255, 255, 0.2);
+      }
+
+      .create-new {
+        display: flex;
+        align-items: center;
+        background: linear-gradient(135deg, #e0e0e0, #f5f5f5);
+        color: #333;
+        padding: 12px 15px;
+        border-radius: 50px;
+        margin-top: 20px;
+        cursor: pointer;
+        transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+        font-weight: 500;
+        justify-content: center;
+        gap: 8px;
+      }
+
+      .create-new:hover {
+        background: linear-gradient(135deg, #f0f0f0, #ffffff);
+        transform: translateY(-2px);
+        box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2), 0 0 0 1px rgba(0, 0, 0, 0.05);
+      }
+
+      .notes-container {
+        list-style: none;
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+        gap: 15px;
+        margin-top: 20px;
+      }
+
+      .note-item {
+        padding: 16px;
+        background-color: rgba(35, 35, 40, 0.6);
+        border-radius: 12px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        border: 1px solid var(--border-color);
+        height: 160px;
+        display: flex;
+        flex-direction: column;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      }
+
+      .note-item:hover {
+        background-color: rgba(45, 45, 50, 0.6);
+        transform: translateY(-3px);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
+      }
+
+      .note-item-title {
+        font-weight: 600;
+        font-size: 16px;
+        margin-bottom: 8px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .note-item-preview {
+        font-size: 14px;
+        color: rgba(255, 255, 255, 0.6);
+        overflow: hidden;
+        display: -webkit-box;
+        -webkit-line-clamp: 4;
+        line-clamp: 4;
+        -webkit-box-orient: vertical;
+        flex-grow: 1;
+        line-height: 1.5;
+      }
+
+      .note-item-date {
+        font-size: 12px;
+        color: rgba(255, 255, 255, 0.4);
+        margin-top: 10px;
+        text-align: left;
+      }
+
+      .empty-state {
+        color: rgba(255, 255, 255, 0.5);
+        text-align: center;
+        padding: 40px 0;
+        font-size: 16px;
+        grid-column: 1 / -1;
+      }
+
+      .app-footer {
+        font-size: 0.75rem;
+        color: rgba(255, 255, 255, 0.4);
+        margin-top: 25px;
+        letter-spacing: 0.4px;
+        text-align: center;
+      }
+
+      a {
+        text-decoration: none;
+        color: inherit;
+      }
+
+      .note-item-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 10px;
+      }
+
+      .delete-note {
+        background-color: rgba(255, 70, 70, 0.6);
+        color: white;
+        border: none;
+        color: white;
+        padding: 8px 16px;
+        border-radius: 50px;
+        font-size: 14px;
+        cursor: pointer;
+        transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+        font-weight: 500;
+      }
+
+      .delete-note:hover {
+        background-color: rgba(255, 70, 70, 0.8);
+        transform: scale(1.1);
+        opacity: 1;
+      }
+    </style>
+  </head>
+  <body>
+    <canvas id="canvas"></canvas>
+
+    <a href="./landing.html" class="back-button">← Back to Home</a>
+
+    <div class="main-container">
+      <div class="header">
+        <div class="title">Your Notes</div>
+        <span class="note-count" id="note-count">0 notes</span>
+      </div>
+
+      <div class="create-new" id="create-new">
+        <span>+</span> Create New Note
+      </div>
+
+      <ul class="notes-container" id="notes-list">
+        <!-- Notes will be dynamically added here -->
+      </ul>
+
+      <div class="app-footer">Write. Save. Remember.</div>
+    </div>
+
+    <script>
+      // Initialize canvas background
+      const canvas = document.getElementById("canvas");
+      const ctx = canvas.getContext("2d");
+      let particles = [];
+
+      // Set canvas size
+      function resizeCanvas() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+      }
+
+      resizeCanvas();
+      window.addEventListener("resize", resizeCanvas);
+
+      // Particle class for background effect
+      class Particle {
+        constructor() {
+          this.x = Math.random() * canvas.width;
+          this.y = Math.random() * canvas.height;
+          this.size = Math.random() * 2 + 0.5;
+          this.speedX = Math.random() * 0.5 - 0.25;
+          this.speedY = Math.random() * 0.5 - 0.25;
+          this.opacity = Math.random() * 0.5 + 0.1;
+        }
+
+        update() {
+          this.x += this.speedX;
+          this.y += this.speedY;
+
+          // Wrap around canvas
+          if (this.x < 0) this.x = canvas.width;
+          if (this.x > canvas.width) this.x = 0;
+          if (this.y < 0) this.y = canvas.height;
+          if (this.y > canvas.height) this.y = 0;
+        }
+
+        draw() {
+          ctx.fillStyle = `rgba(255, 255, 255, ${this.opacity})`;
+          ctx.beginPath();
+          ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+
+      // Create particles
+      function initParticles() {
+        particles = [];
+        const particleCount = Math.min(
+          100,
+          Math.floor((canvas.width * canvas.height) / 8000)
+        );
+
+        for (let i = 0; i < particleCount; i++) {
+          particles.push(new Particle());
+        }
+      }
+
+      initParticles();
+
+      // Animation loop
+      function animate() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        particles.forEach((particle) => {
+          particle.update();
+          particle.draw();
+        });
+
+        requestAnimationFrame(animate);
+      }
+
+      animate();
+
+      // Notes functionality
+      let notes = JSON.parse(localStorage.getItem("notly-notes")) || [];
+      const notesList = document.getElementById("notes-list");
+      const noteCount = document.getElementById("note-count");
+      const createNewButton = document.getElementById("create-new");
+
+      // Update note count
+      function updateNoteCount() {
+        noteCount.textContent = `${notes.length} note${
+          notes.length !== 1 ? "s" : ""
+        }`;
+      }
+
+      // Format date for display
+      function formatDate(timestamp) {
+        const date = new Date(timestamp);
+        return date.toLocaleDateString(undefined, {
+          year: "numeric",
+          month: "short",
+          day: "numeric",
+        });
+      }
+
+      // Render notes list
+      function renderNotesList() {
+        notesList.innerHTML = "";
+        updateNoteCount();
+
+        if (notes.length === 0) {
+          const emptyState = document.createElement("li");
+          emptyState.className = "empty-state";
+          emptyState.textContent =
+            "You don't have any notes yet. Create your first note!";
+          notesList.appendChild(emptyState);
+          return;
+        }
+
+        // Sort notes by update date (newest first)
+        notes.sort((a, b) => b.updatedAt - a.updatedAt);
+
+        notes.forEach((note) => {
+          const noteItem = document.createElement("li");
+          noteItem.className = "note-item";
+          noteItem.dataset.id = note.id;
+
+          const noteTitle = document.createElement("div");
+          noteTitle.className = "note-item-title";
+          noteTitle.textContent = note.title || "Untitled Note";
+
+          const notePreview = document.createElement("div");
+          notePreview.className = "note-item-preview";
+          notePreview.textContent = note.content || "No content";
+
+          const noteFooter = document.createElement("div");
+          noteFooter.className = "note-item-footer";
+
+          const noteDate = document.createElement("div");
+          noteDate.className = "note-item-date";
+          noteDate.textContent = formatDate(note.updatedAt);
+
+          // Create delete button
+          const deleteButton = document.createElement("button");
+          deleteButton.className = "delete-note";
+          deleteButton.innerHTML = "Delete"; // × symbol
+          deleteButton.title = "Delete note";
+          deleteButton.addEventListener("click", (e) => deleteNote(note.id, e));
+
+          // Add date and delete button to footer
+          noteFooter.appendChild(noteDate);
+          noteFooter.appendChild(deleteButton);
+
+          noteItem.appendChild(noteTitle);
+          noteItem.appendChild(notePreview);
+          noteItem.appendChild(noteFooter);
+
+          // Add event listener to open note
+          noteItem.addEventListener("click", () => {
+            openNote(note.id);
+          });
+
+          notesList.appendChild(noteItem);
+        });
+      }
+
+      // Open note for editing
+      function openNote(noteId) {
+        // Store the ID in session storage to retrieve in the edit page
+        sessionStorage.setItem("currentNoteId", noteId);
+
+        // Remove the beforeunload handler to prevent the confirmation dialog
+        window.onbeforeunload = null;
+
+        window.location.href = "newnote.html";
+      }
+
+      // Create new note
+      function createNewNote() {
+        // Clear any previous ID
+        sessionStorage.removeItem("currentNoteId");
+
+        // Remove the beforeunload handler
+        window.onbeforeunload = null;
+
+        window.location.href = "newnote.html";
+      }
+
+      function setupBeforeUnloadHandler() {
+        // Remove any existing beforeunload handler
+        window.onbeforeunload = null;
+      }
+      // Event listeners
+      createNewButton.addEventListener("click", createNewNote);
+
+      function deleteNote(noteId, event) {
+        // Stop the click event from propagating to the note item
+        event.stopPropagation();
+
+        // Find the index of the note to delete
+        const noteIndex = notes.findIndex((note) => note.id === noteId);
+
+        if (noteIndex !== -1) {
+          // Remove the note from the array
+          notes.splice(noteIndex, 1);
+
+          // Update localStorage
+          localStorage.setItem("notly-notes", JSON.stringify(notes));
+
+          // Re-render the notes list
+          renderNotesList();
+        }
+      }
+      // Initialize
+      renderNotesList();
+      setupBeforeUnloadHandler();
+    </script>
+  </body>
+</html>

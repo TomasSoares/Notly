@@ -58,6 +58,11 @@
         margin-bottom: 5px;
       }
 
+      /* Alternative more specific approach */
+      .container a {
+        text-decoration: none;
+      }
+
       h1 {
         color: white;
         font-family: "Inter", sans-serif;
@@ -266,159 +271,94 @@
     <script>
       const canvas = document.getElementById("canvas");
       const ctx = canvas.getContext("2d");
+      let particles = [];
 
       // Setup canvas
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
 
-      // Mouse position tracking
-      const mouse = {
-        x: undefined,
-        y: undefined,
-        active: false,
-      };
-
-      // Track mouse movements
-      document.addEventListener("mousemove", (event) => {
-        mouse.x = event.clientX;
-        mouse.y = event.clientY;
-        mouse.active = true;
-      });
-
-      document.addEventListener("mouseleave", () => {
-        mouse.active = false;
-      });
-
-      // Config - black and white only
-      const config = {
-        numStars: 120, // Slightly more stars since we removed nebulae
-        starColors: [
-          "#FFFFFF", // White
-          "#DDDDDD", // Light gray
-          "#AAAAAA", // Medium gray
-        ],
-      };
-
-      // Stars in the background
-      const stars = [];
-
-      class Star {
+      // Particle class for background effect
+      class Particle {
         constructor() {
           this.x = Math.random() * canvas.width;
           this.y = Math.random() * canvas.height;
-          this.size = Math.random() * 2.5 + 1.0; // Increased star size
-          this.color =
-            config.starColors[
-              Math.floor(Math.random() * config.starColors.length)
-            ];
-          this.brightness = Math.random() * 0.5 + 0.5;
-          this.twinkleSpeed = Math.random() * 0.02 + 0.01;
-          this.twinklePhase = Math.random() * Math.PI * 2;
-          this.speed = Math.random() * 0.1 + 0.05; // Varying speeds
-        }
-
-        draw() {
-          const twinkle = Math.sin(this.twinklePhase) * 0.3 + 0.7;
-
-          ctx.beginPath();
-          ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-          ctx.fillStyle = this.color;
-          ctx.globalAlpha = this.brightness * twinkle;
-          ctx.fill();
-          ctx.globalAlpha = 1;
+          this.size = Math.random() * 2 + 0.5;
+          this.speedX = Math.random() * 0.5 - 0.25;
+          this.speedY = Math.random() * 0.5 - 0.25;
+          this.opacity = Math.random() * 0.5 + 0.1;
         }
 
         update() {
-          this.twinklePhase += this.twinkleSpeed;
-          this.y += this.speed;
+          this.x += this.speedX;
+          this.y += this.speedY;
 
-          // Check for mouse interaction
-          if (mouse.active) {
-            const dx = mouse.x - this.x;
-            const dy = mouse.y - this.y;
-            const distance = Math.sqrt(dx * dx + dy * dy);
-
-            if (distance < 100) {
-              // Push stars away from mouse
-              this.x += (this.x - mouse.x) * 0.02;
-              this.y += (this.y - mouse.y) * 0.02;
-            }
-          }
-
-          // Reset position when star goes off screen
-          if (this.y > canvas.height) {
-            this.y = 0;
-            this.x = Math.random() * canvas.width;
-          }
-
-          // Wrap around sides
+          // Wrap around canvas
           if (this.x < 0) this.x = canvas.width;
           if (this.x > canvas.width) this.x = 0;
+          if (this.y < 0) this.y = canvas.height;
+          if (this.y > canvas.height) this.y = 0;
+        }
+
+        draw() {
+          ctx.fillStyle = `rgba(255, 255, 255, ${this.opacity})`;
+          ctx.beginPath();
+          ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+          ctx.fill();
         }
       }
 
-      // Initialize stars
-      function initStars() {
-        for (let i = 0; i < config.numStars; i++) {
-          stars.push(new Star());
+      // Create particles and handle window resize
+      function initParticles() {
+        particles = [];
+        const particleCount = Math.min(
+          100,
+          Math.floor((canvas.width * canvas.height) / 8000)
+        );
+
+        for (let i = 0; i < particleCount; i++) {
+          particles.push(new Particle());
         }
       }
 
       // Handle window resize
       window.addEventListener("resize", () => {
-        // Save old dimensions for ratio calculation
-        const oldWidth = canvas.width;
-        const oldHeight = canvas.height;
-
-        // Update canvas size to match new window dimensions
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
-
-        // Reposition all stars proportionally to maintain their relative positions
-        for (const star of stars) {
-          // Scale star positions according to new dimensions
-          star.x = (star.x / oldWidth) * canvas.width;
-          star.y = (star.y / oldHeight) * canvas.height;
-
-          // Make sure stars are within bounds
-          if (star.x < 0) star.x = 0;
-          if (star.x > canvas.width) star.x = canvas.width;
-          if (star.y < 0) star.y = 0;
-          if (star.y > canvas.height) star.y = canvas.height;
-        }
+        initParticles();
       });
 
       // Animation loop
       function animate() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        particles.forEach((particle) => {
+          particle.update();
+          particle.draw();
+        });
+
         requestAnimationFrame(animate);
-
-        // Clear canvas with slight trailing effect
-        ctx.fillStyle = "rgba(0, 0, 0, 0.2)";
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-        // Update and draw stars
-        for (const star of stars) {
-          star.update();
-          star.draw();
-        }
       }
 
       // Initialize and start animation
-      initStars();
+      initParticles();
       animate();
     </script>
     <div class="container">
       <div class="logo-container">
         <h1>Notly</h1>
       </div>
-      <button class="new-notes">
-        <span class="button-icon">+</span>
-        <span>New Note</span>
-      </button>
-      <button class="existing-notes">
-        <span class="button-icon">≡</span>
-        <span>Notes</span>
-      </button>
+      <a href="./newnote.html">
+        <button class="new-notes">
+          <span class="button-icon">+</span>
+          <span>New Note</span>
+        </button>
+      </a>
+      <a href="./yournotes.html">
+        <button class="existing-notes">
+          <span class="button-icon">≡</span>
+          <span>Notes</span>
+        </button>
+      </a>
       <div class="app-footer">Write. Save. Remeber.</div>
     </div>
     <script>
