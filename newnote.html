@@ -452,6 +452,33 @@
       .btn-danger:hover {
         background-color: rgba(255, 70, 70, 0.8);
       }
+
+      @media (max-width: 576px) {
+        .note-page-header {
+          top: -50px;
+          font-size: 16px;
+          max-width: 50%;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+          padding: 0;
+        }
+
+        .back-button {
+          top: 15px;
+          right: 15px;
+          font-size: 12px;
+          padding: 6px 12px;
+          max-width: 120px;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+
+        .main-container {
+          margin-top: 65px;
+        }
+      }
     </style>
   </head>
   <body>
