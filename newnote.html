@@ -671,8 +671,6 @@
         const title = noteTitle.value.trim();
         const content = noteContent.value.trim();
 
-        if (!content && !title) return;
-
         const now = Date.now();
 
         if (currentNoteId) {
@@ -686,22 +684,29 @@
             notes[noteIndex].updatedAt = now;
           }
         } else {
-          // Create new note
-          const newNote = {
-            id: "note_" + now,
-            title: title,
-            content: content,
-            createdAt: now,
-            updatedAt: now,
-          };
-          notes.push(newNote);
-          currentNoteId = newNote.id;
+          // Only create a new note if there's content or a title
+          if (content || title) {
+            const newNote = {
+              id: "note_" + now,
+              title: title,
+              content: content,
+              createdAt: now,
+              updatedAt: now,
+            };
+            notes.push(newNote);
+            currentNoteId = newNote.id;
+          }
         }
 
+        // Always save to localStorage, even if empty
         localStorage.setItem("notly-notes", JSON.stringify(notes));
+        
+        // Set the flag that notes have been updated
+        sessionStorage.setItem("notesUpdated", "true");
+        
         renderNotesList();
       }
-
+      
       // Load note
       function loadNote(id) {
         const note = notes.find((note) => note.id === id);
@@ -752,17 +757,37 @@
       }
 
       // Event listeners
-      saveButton.addEventListener("click", () => {
+      clearButton.addEventListener("click", () => {
+        // Store the currentNoteId temporarily
+        const savedNoteId = currentNoteId;
+        
+        // Clear the fields
+        noteTitle.value = "";
+        noteContent.value = "";
+        
+        // Restore the note ID
+        currentNoteId = savedNoteId;
+        
+        // Explicitly mark as changed to ensure it saves
+        formChanged = true;
+        
+        // Save the cleared note immediately and force the update flag
         saveNote();
+        sessionStorage.setItem("notesUpdated", "true");
+        
+        // Set focus to the title field
+        noteTitle.focus();
+        
+        // Since we just saved, mark as not changed
+        formChanged = false;
+        
+        console.log("Note cleared and saved at " + new Date().toLocaleTimeString());
       });
 
-      clearButton.addEventListener("click", () => {
-        if (currentNoteId) {
-          loadNote(currentNoteId);
-        } else {
-          noteTitle.value = "";
-          noteContent.value = "";
-        }
+      saveButton.addEventListener("click", () => {
+        saveNote();
+        // Set flag to refresh notes list when returning to yournotes.html
+        sessionStorage.setItem("notesUpdated", "true");
       });
 
       createNewButton.addEventListener("click", createNewNote);
@@ -795,6 +820,8 @@
 
         function autoSave() {
           saveNote();
+          // Set flag to refresh notes list when returning to yournotes.html
+          sessionStorage.setItem("notesUpdated", "true");
           formChanged = false; // Mark as not changed after saving
           console.log("Auto-saved at " + new Date().toLocaleTimeString());
         }
@@ -843,6 +870,9 @@
             // Update localStorage
             localStorage.setItem("notly-notes", JSON.stringify(notes));
 
+            // Set flag to refresh notes list when returning to yournotes.html
+            sessionStorage.setItem("notesUpdated", "true");
+            
             // Clear form changes flag
             formChanged = false;
 

@@ -461,8 +461,37 @@
         }
       }
       // Initialize
-      renderNotesList();
+      function initApp() {
+        // Always refresh notes from localStorage to ensure we have the latest data
+        notes = JSON.parse(localStorage.getItem("notly-notes")) || [];
+        
+        // Render the notes list with fresh data
+        renderNotesList();
+        
+        // Check if we're returning from the note editor with updated notes
+        if (sessionStorage.getItem("notesUpdated")) {
+          // Clear the flag
+          sessionStorage.removeItem("notesUpdated");
+          
+          // Force DOM update in case there's any caching issue
+          setTimeout(() => {
+            notes = JSON.parse(localStorage.getItem("notly-notes")) || [];
+            renderNotesList();
+          }, 50);
+        }
+      }
+      
+      // Add page visibility handler to refresh notes when coming back to this tab
+      document.addEventListener("visibilitychange", () => {
+        if (document.visibilityState === "visible") {
+          // Refresh notes when the tab becomes visible again
+          notes = JSON.parse(localStorage.getItem("notly-notes")) || [];
+          renderNotesList();
+        }
+      });
+      
       setupBeforeUnloadHandler();
+      initApp();
     </script>
   </body>
 </html>
